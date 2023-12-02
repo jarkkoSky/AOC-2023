@@ -1,10 +1,8 @@
 use std::fs;
 
-use itertools::Itertools;
-
 fn get_color_value_from_draw(draw: &Vec<&str>, color: &str) -> i32 {
-    match draw.iter().find_position(|x| x.contains(color)) {
-        Some(index) => draw[index.0 - 1].parse::<i32>().unwrap(),
+    match draw.iter().position(|x| x.contains(color)) {
+        Some(index) => draw[index - 1].parse::<i32>().unwrap(),
         None => 0,
     }
 }
