@@ -1,3 +1,4 @@
+use rayon::prelude::*;
 use std::fs;
 
 #[derive(Debug)]
@@ -28,17 +29,17 @@ struct Map {
 
 impl Map {
     fn convert(&self, value: u64) -> u64 {
-        let a: Vec<u64> = self
+        let matches: Vec<u64> = self
             .conversion_ranges
             .iter()
             .flat_map(|range| range.convert(value))
             .collect();
 
-        if a.len() == 0 {
+        if matches.len() == 0 {
             return value;
         }
 
-        a[0]
+        matches[0]
     }
 }
 
@@ -122,6 +123,25 @@ pub fn run() {
         .min()
         .unwrap();
 
+    let part2 = seeds
+        .into_par_iter()
+        .chunks(2)
+        .map(|pair| {
+            let mut i = pair[0];
+            let mut res: Vec<u64> = vec![];
+            let size = pair[0] + pair[1];
+
+            while i < size {
+                res.push(run_seed(i, &maps, "seed"));
+
+                i = i + 1;
+            }
+
+            res.iter().min().unwrap().clone()
+        })
+        .min()
+        .unwrap();
+
     println!("Part 1: {}", part1);
-    //println!("Part 2: {}", 0);
+    println!("Part 2: {}", part2);
 }
