@@ -1,10 +1,7 @@
 use chrono::prelude::*;
 use std::{fs, time::Instant};
 
-struct Node {
-    id: String,
-    elements: (String, String),
-}
+struct Node(String, String, String);
 
 fn parse_nodes(rows: &Vec<&str>) -> Vec<Node> {
     rows.iter()
@@ -20,10 +17,7 @@ fn parse_nodes(rows: &Vec<&str>) -> Vec<Node> {
                 .map(|x| x.trim().replace(")", ""))
                 .collect();
 
-            Node {
-                id: id.to_string(),
-                elements: (elements[0].clone(), elements[1].clone()),
-            }
+            Node(id.to_string(), elements[0].clone(), elements[1].clone())
         })
         .collect()
 }
@@ -58,6 +52,10 @@ fn run_map(
     steps
 }*/
 
+fn get_node_with_id<'a>(nodes: &'a Vec<Node>, id: &'a String) -> &'a Node {
+    nodes.iter().find(|x| x.0.eq(id)).unwrap()
+}
+
 fn run_map_2(starting_nodes: &Vec<&Node>, nodes: &Vec<Node>, instructions: &Vec<char>) -> u64 {
     let mut instruction_index = 0;
     let mut steps: u64 = 0;
@@ -77,20 +75,21 @@ fn run_map_2(starting_nodes: &Vec<&Node>, nodes: &Vec<Node>, instructions: &Vec<
             now = Instant::now();
         }
 
-        let destinations: Vec<&Node> = current_nodes
-            .iter()
-            .map(|node| {
-                let element = match instructions[instruction_index] {
-                    'L' => &node.elements.0,
-                    _ => &node.elements.1,
-                };
+        let mut temp: Vec<&Node> = vec![];
 
-                nodes.iter().find(|x| x.id.eq(element)).unwrap()
-            })
-            .collect();
+        for c in current_nodes {
+            let element = match instructions[instruction_index] {
+                'L' => &c.1,
+                _ => &c.2,
+            };
+
+            let a = get_node_with_id(nodes, element);
+
+            temp.push(a);
+        }
 
         steps += 1;
-        current_nodes = destinations;
+        current_nodes = temp;
 
         if instruction_index == instructions.len() - 1 {
             instruction_index = 0;
@@ -98,7 +97,7 @@ fn run_map_2(starting_nodes: &Vec<&Node>, nodes: &Vec<Node>, instructions: &Vec<
             instruction_index += 1;
         }
 
-        stop = current_nodes.iter().all(|x| x.id.ends_with("Z"));
+        stop = current_nodes.iter().all(|x| x.0.ends_with("Z"));
     }
 
     steps
@@ -122,7 +121,7 @@ pub fn run() {
         &instructions,
     );*/
 
-    let starting_nodes: Vec<&Node> = nodes.iter().filter(|x| x.id.ends_with("A")).collect();
+    let starting_nodes: Vec<&Node> = nodes.iter().filter(|x| x.0.ends_with("A")).collect();
 
     let part2 = run_map_2(&starting_nodes, &nodes, &instructions);
 
