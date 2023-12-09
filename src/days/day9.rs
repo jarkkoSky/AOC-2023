@@ -3,12 +3,9 @@ use std::fs;
 fn aperture(row: &Vec<i32>) -> Vec<Vec<&i32>> {
     row.iter()
         .enumerate()
-        .flat_map(|(index, item)| {
-            if index == row.len() - 1 {
-                return None;
-            }
-
-            Some(vec![item, &row[index + 1]])
+        .flat_map(|(index, item)| match &row.get(index + 1) {
+            Some(next_item) => Some(vec![item, next_item]),
+            _ => None,
         })
         .collect::<Vec<Vec<&i32>>>()
 }
@@ -16,13 +13,13 @@ fn aperture(row: &Vec<i32>) -> Vec<Vec<&i32>> {
 fn row_prediction(row: Vec<i32>, part: i32) -> i32 {
     let mut sequences: Vec<Vec<i32>> = vec![row];
 
-    while sequences.last().unwrap().iter().all(|x| x.eq(&0)) == false {
-        let new_sequence: Vec<i32> = aperture(sequences.last().unwrap())
-            .iter()
-            .map(|x| x[1] - x[0])
-            .collect();
-
-        sequences.push(new_sequence);
+    while sequences.last().unwrap().iter().all(|x| *x == 0) == false {
+        sequences.push(
+            aperture(sequences.last().unwrap())
+                .iter()
+                .map(|x| x[1] - x[0])
+                .collect(),
+        );
     }
 
     sequences.reverse();
@@ -36,8 +33,8 @@ fn row_prediction(row: Vec<i32>, part: i32) -> i32 {
 }
 
 pub fn run() {
-    let file = fs::read_to_string("src/inputs/day9.txt").unwrap();
-    let rows: Vec<Vec<i32>> = file
+    let rows: Vec<Vec<i32>> = fs::read_to_string("src/inputs/day9.txt")
+        .unwrap()
         .lines()
         .map(|line| {
             line.split(" ")
