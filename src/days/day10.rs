@@ -177,6 +177,16 @@ fn is_possible_direction(
     }
 }
 
+fn aperture(row: &Vec<(usize, usize)>) -> Vec<Vec<&(usize, usize)>> {
+    row.iter()
+        .enumerate()
+        .flat_map(|(index, item)| match &row.get(index + 1) {
+            Some(next_item) => Some(vec![item, next_item]),
+            _ => None,
+        })
+        .collect::<Vec<Vec<&(usize, usize)>>>()
+}
+
 pub fn run() {
     let grid: Vec<Vec<char>> = fs::read_to_string("src/inputs/day10.txt")
         .unwrap()
@@ -194,17 +204,14 @@ pub fn run() {
         .last()
         .unwrap();
 
-    let start = ('S', start_pos);
+    let mut tiles: Vec<(char, (usize, usize))> = vec![('S', start_pos)];
 
-    let mut tiles: Vec<(char, (usize, usize))> = vec![start];
-    let mut stop = false;
-
-    while stop == false {
+    loop {
         let current = tiles.last().unwrap();
         let possible: Vec<(char, (usize, usize))> = surrounding_values(&grid, current.1)
             .iter()
             .filter(|x| {
-                let exists: bool = tiles.iter().any(|tile| tile.1 == x.1);
+                let exists = tiles.iter().any(|tile| tile.1 == x.1);
 
                 is_possible_direction(&x, &current) && exists == false
             })
@@ -212,7 +219,6 @@ pub fn run() {
             .collect();
 
         if possible.len() == 0 {
-            stop = true;
             break;
         }
 
@@ -223,5 +229,23 @@ pub fn run() {
 
     println!("Part 1: {}", tiles.len() / 2);
 
-    // TBD Part 2, shoelace formula + picks theorem
+    let points: Vec<(usize, usize)> = tiles.iter().map(|x| x.1).collect();
+
+    let mut vertices = aperture(&points);
+    vertices.push(vec![points.last().unwrap(), &start_pos]);
+
+    // Shoelace formula
+    let area: i32 = vertices
+        .iter()
+        .fold(0 as i32, |acc, e| {
+            let (x1, y1) = e[0];
+            let (x2, y2) = e[1];
+
+            acc + *x1 as i32 * *y2 as i32 - *y1 as i32 * *x2 as i32
+        })
+        .abs()
+        / 2;
+
+    // Picks theorem
+    println!("Part 2: {}", area - (tiles.len() as i32 / 2) + 1);
 }
